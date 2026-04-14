@@ -4,6 +4,16 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+
+
+class ErrorResponse(BaseModel):
+    request_id: str
+    error: ErrorDetail
+
+
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
     fallback_to_rule: bool = True

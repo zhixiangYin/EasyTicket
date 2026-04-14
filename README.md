@@ -158,6 +158,18 @@ curl -X POST http://127.0.0.1:8000/search \
   -d '{"request_id":"demo-request-1","query":"find me a direct ticket from New York to Boston tomorrow under 80 dollars for 2 passengers"}'
 ```
 
+Search errors use a predictable shape:
+
+```json
+{
+  "request_id": "demo-request-1",
+  "error": {
+    "code": "llm_unavailable",
+    "message": "OPENAI_API_KEY is not set"
+  }
+}
+```
+
 ## Run Tests
 
 ```bash

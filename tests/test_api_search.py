@@ -22,3 +22,25 @@ def test_search_endpoint_returns_summary_and_results(monkeypatch) -> None:
     assert body["summary"]
     assert body["parsed_query"]["origin"] == "New York"
     assert body["results"][0]["platform"] == "mock_a"
+
+
+def test_search_endpoint_returns_structured_error(monkeypatch) -> None:
+    monkeypatch.setenv("EASYTICKET_LLM_CLIENT", "openai")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    client = TestClient(app)
+
+    response = client.post(
+        "/search",
+        json={
+            "query": "from nowhere to nowhere",
+            "request_id": "api-error-request",
+            "fallback_to_rule": False,
+        },
+    )
+
+    body = response.json()
+
+    assert response.status_code == 503
+    assert body["request_id"] == "api-error-request"
+    assert body["error"]["code"] == "llm_unavailable"
+    assert "OPENAI_API_KEY" in body["error"]["message"]
