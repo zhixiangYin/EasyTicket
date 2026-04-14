@@ -7,6 +7,8 @@ from app.schemas.search import SearchInput
 
 class MockBConnector(BaseConnector):
     name = "mock_b"
+    display_name = "Mock Platform B"
+    timeout_seconds = 2.0
 
     def search(self, search_input: SearchInput) -> list[TicketResult]:
         base_departure = datetime.combine(search_input.travel_date, time(hour=11, minute=30))

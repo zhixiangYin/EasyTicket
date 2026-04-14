@@ -99,6 +99,8 @@ Every agent search response includes a `request_id`, which is used to trace pars
 
 Search responses also include `connector_errors`, so one platform failure can be surfaced without blocking successful results from other platforms. Connector errors include stable `code` values such as `connector_unavailable` or `unexpected_connector_error`.
 
+Connectors expose metadata such as `name`, `display_name`, `supports_auth`, `supports_local_agent`, and `timeout_seconds`. This keeps mock and future real platform connectors aligned behind the same plugin-style contract.
+
 Core backend dependencies:
 - `FastAPI`: HTTP API layer
 - `Pydantic`: API request and response validation

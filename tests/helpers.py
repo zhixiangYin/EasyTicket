@@ -50,6 +50,7 @@ def make_ticket_result(
 
 class StaticConnector(BaseConnector):
     name = "static"
+    display_name = "Static Test Connector"
 
     def __init__(self, results: list[TicketResult]) -> None:
         self.results = results
