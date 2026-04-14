@@ -97,6 +97,7 @@ Core backend dependencies:
 - `FastAPI`: HTTP API layer
 - `Pydantic`: API request and response validation
 - `httpx`: HTTP client foundation for tests and future real connectors
+- `pytest`: automated test runner
 - `uvicorn`: local ASGI server
 
 ## Run the Demo
@@ -154,6 +155,13 @@ curl -X POST http://127.0.0.1:8000/search \
   -d '{"query":"find me a direct ticket from New York to Boston tomorrow under 80 dollars for 2 passengers"}'
 ```
 
+## Run Tests
+
+```bash
+source .venv/bin/activate
+pytest
+```
+
 ## OpenAI API Integration
 
 The repository now includes a real OpenAI client implementation in [app/agent/clients.py](/Users/inshishou/Documents/JobApplication/Projects/EasyTicket/app/agent/clients.py).
@@ -207,7 +215,6 @@ This stage is meant to help understand the foundations of an agent system:
 ## Planned Next Steps
 
 Near-term steps:
-- generate recommendation summaries for ranked results
 - add automated tests for the agent core and API response mapping
 - add confidence or validation feedback for parsed queries
 - add request tracing and richer retry handling for the OpenAI client
