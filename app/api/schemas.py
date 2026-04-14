@@ -47,12 +47,18 @@ class TicketResultResponse(BaseModel):
     fetched_at: datetime
 
 
+class ConnectorErrorResponse(BaseModel):
+    connector: str
+    message: str
+
+
 class SearchResponse(BaseModel):
     request_id: str
     query: str
     parsed_query: ParsedQueryResponse
     summary: str
     results: list[TicketResultResponse]
+    connector_errors: list[ConnectorErrorResponse]
     parser_used: str
     fallback_reason: str | None
     parser_notes: list[str]

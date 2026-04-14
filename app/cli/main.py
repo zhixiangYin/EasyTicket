@@ -11,6 +11,11 @@ def render_response(response: AgentSearchResponse, *, debug: bool = False) -> in
 
     if not response.results:
         print("No tickets found for the current filters.")
+        if response.connector_errors:
+            print(
+                f"{len(response.connector_errors)} platform connector(s) failed. "
+                "Use --debug for details."
+            )
         return 0
 
     print(response.summary)
@@ -51,6 +56,11 @@ def render_debug_info(response: AgentSearchResponse) -> None:
 
     for note in response.parser_notes:
         print(f"- note: {note}")
+
+    for connector_error in response.connector_errors:
+        print(
+            f"- connector_error: {connector_error.connector}: {connector_error.message}"
+        )
 
     print("")
 

@@ -77,10 +77,11 @@ Current data flow:
 3. `AgentSearchService` asks OpenAI to parse the request into a `SearchInput`
 4. if OpenAI parsing fails, `AgentSearchService` can fall back to the internal rule parser
 5. `SearchService` calls each connector
-6. connectors return normalized `TicketResult` objects
-7. `RankingService` applies filters and sorting
-8. `ResultSummarizer` generates a short recommendation summary
-9. CLI or API returns the final response
+6. connector failures are collected without failing the whole search
+7. connectors return normalized `TicketResult` objects
+8. `RankingService` applies filters and sorting
+9. `ResultSummarizer` generates a short recommendation summary
+10. CLI or API returns the final response
 
 This separation keeps responsibilities clear:
 - `api`: exposes the backend agent core over HTTP for a future web UI
@@ -95,6 +96,8 @@ This separation keeps responsibilities clear:
 - `cli`: provides a simple user-facing interface for testing the system
 
 Every agent search response includes a `request_id`, which is used to trace parser behavior, fallback behavior, and result counts across CLI/API flows.
+
+Search responses also include `connector_errors`, so one platform failure can be surfaced without blocking successful results from other platforms.
 
 Core backend dependencies:
 - `FastAPI`: HTTP API layer

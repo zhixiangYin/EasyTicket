@@ -22,6 +22,7 @@ def test_search_endpoint_returns_summary_and_results(monkeypatch) -> None:
     assert body["summary"]
     assert body["parsed_query"]["origin"] == "New York"
     assert body["results"][0]["platform"] == "mock_a"
+    assert body["connector_errors"] == []
 
 
 def test_search_endpoint_returns_structured_error(monkeypatch) -> None:

@@ -8,6 +8,7 @@ from app.agent.search_agent import AgentSearchResponse
 from app.api.schemas import (
     ErrorDetail,
     ErrorResponse,
+    ConnectorErrorResponse,
     ParsedQueryResponse,
     SearchRequest,
     SearchResponse,
@@ -93,6 +94,13 @@ def _to_search_response(response: AgentSearchResponse) -> SearchResponse:
                 fetched_at=result.fetched_at,
             )
             for result in response.results
+        ],
+        connector_errors=[
+            ConnectorErrorResponse(
+                connector=connector_error.connector,
+                message=connector_error.message,
+            )
+            for connector_error in response.connector_errors
         ],
         parser_used=response.parser_used,
         fallback_reason=response.fallback_reason,

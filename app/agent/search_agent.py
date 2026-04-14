@@ -11,6 +11,7 @@ from app.connectors.base import BaseConnector
 from app.schemas.result import TicketResult
 from app.schemas.search import SearchInput
 from app.services.search_service import SearchService
+from app.services.search_service import ConnectorError
 
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ class AgentSearchResponse:
     parser_used: str
     parser_notes: list[str]
     summary: str
+    connector_errors: list[ConnectorError]
     fallback_reason: str | None = None
 
 
@@ -72,24 +74,25 @@ class AgentSearchService:
             fallback_reason is not None,
         )
 
-        results = self.search_service.search(parsed_request.search_input)
+        search_execution = self.search_service.search(parsed_request.search_input)
         logger.info(
             "agent_search_completed request_id=%s results_count=%s",
             resolved_request_id,
-            len(results),
+            len(search_execution.results),
         )
 
         summary = self.summarizer.summarize(
             search_input=parsed_request.search_input,
-            results=results,
+            results=search_execution.results,
         )
         return self._build_response(
             request_id=resolved_request_id,
             query=query,
             parsed_request=parsed_request,
-            results=results,
+            results=search_execution.results,
             parser_used=parser_used,
             summary=summary,
+            connector_errors=search_execution.connector_errors,
             fallback_reason=fallback_reason,
         )
 
@@ -102,6 +105,7 @@ class AgentSearchService:
         results: list[TicketResult],
         parser_used: str,
         summary: str,
+        connector_errors: list[ConnectorError],
         fallback_reason: str | None,
     ) -> AgentSearchResponse:
         return AgentSearchResponse(
@@ -112,5 +116,6 @@ class AgentSearchService:
             parser_used=parser_used,
             parser_notes=parsed_request.notes,
             summary=summary,
+            connector_errors=connector_errors,
             fallback_reason=fallback_reason,
         )

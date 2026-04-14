@@ -56,3 +56,10 @@ class StaticConnector(BaseConnector):
 
     def search(self, search_input: SearchInput) -> list[TicketResult]:
         return self.results
+
+
+class FailingConnector(BaseConnector):
+    name = "failing"
+
+    def search(self, search_input: SearchInput) -> list[TicketResult]:
+        raise RuntimeError("connector unavailable")
