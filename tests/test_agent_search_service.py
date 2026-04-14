@@ -23,8 +23,9 @@ def test_agent_search_service_uses_llm_parser_when_successful() -> None:
         fallback_parser=SuccessfulParser(),
     )
 
-    response = service.search("natural language query")
+    response = service.search("natural language query", request_id="test-request")
 
+    assert response.request_id == "test-request"
     assert response.parser_used == "llm"
     assert response.fallback_reason is None
     assert response.results[0].platform == "mock_a"
@@ -38,8 +39,9 @@ def test_agent_search_service_falls_back_to_rule_parser() -> None:
         fallback_parser=SuccessfulParser(),
     )
 
-    response = service.search("natural language query")
+    response = service.search("natural language query", request_id="test-request")
 
+    assert response.request_id == "test-request"
     assert response.parser_used == "rule"
     assert response.fallback_reason == "model unavailable"
     assert response.results[0].platform == "mock_a"

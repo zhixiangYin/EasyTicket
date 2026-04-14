@@ -1,4 +1,6 @@
+import logging
 from dataclasses import dataclass
+from uuid import uuid4
 
 from app.agent.base import ParsedSearchRequest
 from app.agent.clients import LLMClientError
@@ -11,8 +13,12 @@ from app.schemas.search import SearchInput
 from app.services.search_service import SearchService
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass(slots=True)
 class AgentSearchResponse:
+    request_id: str
     query: str
     search_input: SearchInput
     results: list[TicketResult]
@@ -42,7 +48,9 @@ class AgentSearchService:
         query: str,
         *,
         fallback_to_rule: bool = True,
+        request_id: str | None = None,
     ) -> AgentSearchResponse:
+        resolved_request_id = request_id or str(uuid4())
         parser_used = "llm"
         fallback_reason: str | None = None
 
@@ -57,12 +65,26 @@ class AgentSearchService:
             fallback_reason = str(exc)
             parsed_request = self.fallback_parser.parse(query)
 
+        logger.info(
+            "agent_search_parsed request_id=%s parser=%s fallback=%s",
+            resolved_request_id,
+            parser_used,
+            fallback_reason is not None,
+        )
+
         results = self.search_service.search(parsed_request.search_input)
+        logger.info(
+            "agent_search_completed request_id=%s results_count=%s",
+            resolved_request_id,
+            len(results),
+        )
+
         summary = self.summarizer.summarize(
             search_input=parsed_request.search_input,
             results=results,
         )
         return self._build_response(
+            request_id=resolved_request_id,
             query=query,
             parsed_request=parsed_request,
             results=results,
@@ -74,6 +96,7 @@ class AgentSearchService:
     def _build_response(
         self,
         *,
+        request_id: str,
         query: str,
         parsed_request: ParsedSearchRequest,
         results: list[TicketResult],
@@ -82,6 +105,7 @@ class AgentSearchService:
         fallback_reason: str | None,
     ) -> AgentSearchResponse:
         return AgentSearchResponse(
+            request_id=request_id,
             query=query,
             search_input=parsed_request.search_input,
             results=results,

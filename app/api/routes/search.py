@@ -19,6 +19,7 @@ def search(request: SearchRequest) -> SearchResponse:
         response = build_agent_search_service().search(
             request.query,
             fallback_to_rule=request.fallback_to_rule,
+            request_id=request.request_id,
         )
     except (LLMClientError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -29,6 +30,7 @@ def search(request: SearchRequest) -> SearchResponse:
 def _to_search_response(response: AgentSearchResponse) -> SearchResponse:
     search_input = response.search_input
     return SearchResponse(
+        request_id=response.request_id,
         query=response.query,
         parsed_query=ParsedQueryResponse(
             origin=search_input.origin,

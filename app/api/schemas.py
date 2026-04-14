@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1)
     fallback_to_rule: bool = True
+    request_id: str | None = None
 
 
 class ParsedQueryResponse(BaseModel):
@@ -37,6 +38,7 @@ class TicketResultResponse(BaseModel):
 
 
 class SearchResponse(BaseModel):
+    request_id: str
     query: str
     parsed_query: ParsedQueryResponse
     summary: str

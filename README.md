@@ -73,13 +73,14 @@ Local config files:
 Current data flow:
 
 1. CLI collects one natural-language user request
-2. `AgentSearchService` asks OpenAI to parse the request into a `SearchInput`
-3. if OpenAI parsing fails, `AgentSearchService` can fall back to the internal rule parser
-4. `SearchService` calls each connector
-5. connectors return normalized `TicketResult` objects
-6. `RankingService` applies filters and sorting
-7. `ResultSummarizer` generates a short recommendation summary
-8. CLI or API returns the final response
+2. `AgentSearchService` creates or accepts a `request_id` for tracing
+3. `AgentSearchService` asks OpenAI to parse the request into a `SearchInput`
+4. if OpenAI parsing fails, `AgentSearchService` can fall back to the internal rule parser
+5. `SearchService` calls each connector
+6. connectors return normalized `TicketResult` objects
+7. `RankingService` applies filters and sorting
+8. `ResultSummarizer` generates a short recommendation summary
+9. CLI or API returns the final response
 
 This separation keeps responsibilities clear:
 - `api`: exposes the backend agent core over HTTP for a future web UI
@@ -92,6 +93,8 @@ This separation keeps responsibilities clear:
 - `connectors`: define how each platform provides data
 - `services`: contain business logic such as aggregation and ranking
 - `cli`: provides a simple user-facing interface for testing the system
+
+Every agent search response includes a `request_id`, which is used to trace parser behavior, fallback behavior, and result counts across CLI/API flows.
 
 Core backend dependencies:
 - `FastAPI`: HTTP API layer
@@ -152,7 +155,7 @@ Search request:
 ```bash
 curl -X POST http://127.0.0.1:8000/search \
   -H "Content-Type: application/json" \
-  -d '{"query":"find me a direct ticket from New York to Boston tomorrow under 80 dollars for 2 passengers"}'
+  -d '{"request_id":"demo-request-1","query":"find me a direct ticket from New York to Boston tomorrow under 80 dollars for 2 passengers"}'
 ```
 
 ## Run Tests

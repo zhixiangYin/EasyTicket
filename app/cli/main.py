@@ -36,6 +36,7 @@ def render_response(response: AgentSearchResponse, *, debug: bool = False) -> in
 def render_debug_info(response: AgentSearchResponse) -> None:
     search_input = response.search_input
 
+    print(f"Request ID: {response.request_id}")
     print(f"Parsed query using {response.parser_used} parser:")
     print(f"- origin: {search_input.origin}")
     print(f"- destination: {search_input.destination}")
