@@ -66,4 +66,5 @@ def test_agent_search_service_keeps_partial_results_when_connector_fails() -> No
 
     assert response.results[0].platform == "mock_a"
     assert response.connector_errors[0].connector == "failing"
+    assert response.connector_errors[0].code == "connector_unavailable"
     assert response.connector_errors[0].message == "connector unavailable"

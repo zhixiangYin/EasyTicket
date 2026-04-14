@@ -49,6 +49,7 @@ class TicketResultResponse(BaseModel):
 
 class ConnectorErrorResponse(BaseModel):
     connector: str
+    code: str
     message: str
 
 

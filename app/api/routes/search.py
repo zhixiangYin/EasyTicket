@@ -98,6 +98,7 @@ def _to_search_response(response: AgentSearchResponse) -> SearchResponse:
         connector_errors=[
             ConnectorErrorResponse(
                 connector=connector_error.connector,
+                code=connector_error.code,
                 message=connector_error.message,
             )
             for connector_error in response.connector_errors

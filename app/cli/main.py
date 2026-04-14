@@ -60,7 +60,8 @@ def render_debug_info(response: AgentSearchResponse) -> None:
 
     for connector_error in response.connector_errors:
         print(
-            f"- connector_error: {connector_error.connector}: {connector_error.message}"
+            f"- connector_error: {connector_error.connector} "
+            f"({connector_error.code}): {connector_error.message}"
         )
 
     print("")

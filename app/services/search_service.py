@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.connectors.base import BaseConnector
+from app.connectors.base import BaseConnector, ConnectorException
 from app.schemas.result import TicketResult
 from app.schemas.search import SearchInput
 from app.services.ranking_service import RankingService
@@ -9,6 +9,7 @@ from app.services.ranking_service import RankingService
 @dataclass(slots=True)
 class ConnectorError:
     connector: str
+    code: str
     message: str
 
 
@@ -34,9 +35,21 @@ class SearchService:
         for connector in self.connectors:
             try:
                 aggregated_results.extend(connector.search(search_input))
+            except ConnectorException as exc:
+                connector_errors.append(
+                    ConnectorError(
+                        connector=connector.name,
+                        code=exc.code,
+                        message=str(exc),
+                    )
+                )
             except Exception as exc:
                 connector_errors.append(
-                    ConnectorError(connector=connector.name, message=str(exc))
+                    ConnectorError(
+                        connector=connector.name,
+                        code="unexpected_connector_error",
+                        message=str(exc),
+                    )
                 )
 
         filtered = self.ranking_service.filter_results(aggregated_results, search_input)

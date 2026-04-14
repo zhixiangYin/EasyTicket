@@ -1,6 +1,6 @@
 from datetime import datetime, time, timedelta
 
-from app.connectors.base import BaseConnector
+from app.connectors.base import BaseConnector, ConnectorException
 from app.schemas.result import TicketResult
 from app.schemas.search import SearchInput
 
@@ -62,4 +62,14 @@ class FailingConnector(BaseConnector):
     name = "failing"
 
     def search(self, search_input: SearchInput) -> list[TicketResult]:
-        raise RuntimeError("connector unavailable")
+        raise ConnectorException(
+            "connector unavailable",
+            code="connector_unavailable",
+        )
+
+
+class UnexpectedFailingConnector(BaseConnector):
+    name = "unexpected_failing"
+
+    def search(self, search_input: SearchInput) -> list[TicketResult]:
+        raise RuntimeError("unexpected failure")

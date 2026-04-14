@@ -97,7 +97,7 @@ This separation keeps responsibilities clear:
 
 Every agent search response includes a `request_id`, which is used to trace parser behavior, fallback behavior, and result counts across CLI/API flows.
 
-Search responses also include `connector_errors`, so one platform failure can be surfaced without blocking successful results from other platforms.
+Search responses also include `connector_errors`, so one platform failure can be surfaced without blocking successful results from other platforms. Connector errors include stable `code` values such as `connector_unavailable` or `unexpected_connector_error`.
 
 Core backend dependencies:
 - `FastAPI`: HTTP API layer
