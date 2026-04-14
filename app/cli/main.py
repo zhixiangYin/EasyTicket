@@ -1,31 +1,25 @@
 import argparse
 
-from app.agent.clients import LLMClientError
-from app.agent.llm_parser import LLMSearchParser
-from app.agent.parser import NaturalLanguageSearchParser
+from app.agent.search_agent import AgentSearchResponse
 from app.config import load_dotenv
-from app.connectors.mock_a import MockAConnector
-from app.connectors.mock_b import MockBConnector
-from app.schemas.search import SearchInput
-from app.services.search_service import SearchService
+from app.factory import build_agent_search_service
 
 
-def build_search_service() -> SearchService:
-    return SearchService(connectors=[MockAConnector(), MockBConnector()])
+def render_response(response: AgentSearchResponse, *, debug: bool = False) -> int:
+    if debug:
+        render_debug_info(response)
 
-
-def render_results(search_input: SearchInput) -> int:
-    results = build_search_service().search(search_input)
-    if not results:
+    if not response.results:
         print("No tickets found for the current filters.")
         return 0
 
+    search_input = response.search_input
     print(
-        f"Found {len(results)} ticket options from {search_input.origin} to "
+        f"Found {len(response.results)} ticket options from {search_input.origin} to "
         f"{search_input.destination} on {search_input.travel_date}:"
     )
 
-    for index, result in enumerate(results, start=1):
+    for index, result in enumerate(response.results, start=1):
         print(
             f"{index}. [{result.platform}] "
             f"{result.depart_at.strftime('%H:%M')} -> {result.arrive_at.strftime('%H:%M')} | "
@@ -36,26 +30,10 @@ def render_results(search_input: SearchInput) -> int:
     return 0
 
 
-def ask(args: argparse.Namespace) -> int:
-    parser_mode_used = "llm"
+def render_debug_info(response: AgentSearchResponse) -> None:
+    search_input = response.search_input
 
-    try:
-        parser = LLMSearchParser()
-        parsed_request = parser.parse(args.query)
-    except (LLMClientError, ValueError) as exc:
-        if args.fallback_to_rule:
-            print(f"LLM parser failed: {exc}")
-            print("Falling back to rule parser.")
-            print("")
-            parser_mode_used = "rule"
-            parser = NaturalLanguageSearchParser()
-            parsed_request = parser.parse(args.query)
-        else:
-            raise
-
-    search_input = parsed_request.search_input
-
-    print(f"Parsed query using {parser_mode_used} parser:")
+    print(f"Parsed query using {response.parser_used} parser:")
     print(f"- origin: {search_input.origin}")
     print(f"- destination: {search_input.destination}")
     print(f"- travel_date: {search_input.travel_date}")
@@ -64,11 +42,21 @@ def ask(args: argparse.Namespace) -> int:
     print(f"- max_price: {search_input.max_price}")
     print(f"- direct_only: {search_input.direct_only}")
 
-    for note in parsed_request.notes:
+    if response.fallback_reason:
+        print(f"- fallback_reason: {response.fallback_reason}")
+
+    for note in response.parser_notes:
         print(f"- note: {note}")
 
     print("")
-    return render_results(search_input)
+
+
+def ask(args: argparse.Namespace) -> int:
+    response = build_agent_search_service().search(
+        args.query,
+        fallback_to_rule=args.fallback_to_rule,
+    )
+    return render_response(response, debug=args.debug)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -85,6 +73,11 @@ def build_parser() -> argparse.ArgumentParser:
         action=argparse.BooleanOptionalAction,
         default=True,
         help="When OpenAI parsing fails, retry with the internal rule-based parser",
+    )
+    ask_parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Show parsed query fields and parser diagnostics",
     )
     ask_parser.set_defaults(handler=ask)
     return parser

@@ -9,7 +9,7 @@ The long-term goal is to build an AI-assisted ticket comparison system that can:
 - explain which option is cheaper, faster, or more flexible
 - later extend to local-authorized member-only platform lookups
 
-The current version is intentionally small. It focuses on the core backend flow before adding web UI, real platform connectors, or a real external LLM integration.
+The current version is intentionally small. It focuses on the backend agent core and HTTP API before adding a real web UI or real platform connectors.
 
 ## Current Scope
 
@@ -20,7 +20,7 @@ Implemented in the current milestone:
 - a search service that aggregates all connector results
 - a ranking service that filters and sorts results
 - a rule-based parser that converts natural-language requests into structured input
-- a model-parser interface with validation and a temporary mock model client
+- a model-parser interface with validation, a mock client, and a real OpenAI client
 - a CLI entrypoint for running the flow end to end
 
 This first step is important because it defines the tool layer that a future AI agent will call. The model should interpret user intent, but deterministic Python code should handle querying, filtering, ranking, and output shaping.
@@ -35,11 +35,17 @@ The user-facing product now has a single input method: free-form natural languag
 
 ```text
 app/
+  api/
+    main.py
+    routes/
+      search.py
+    schemas.py
   agent/
     base.py
     clients.py
     llm_parser.py
     parser.py
+    search_agent.py
     validators.py
   cli/
     main.py
@@ -66,20 +72,29 @@ Local config files:
 Current data flow:
 
 1. CLI collects one natural-language user request
-2. OpenAI parses the request into a `SearchInput`
-3. `SearchService` calls each connector
-4. connectors return normalized `TicketResult` objects
-5. `RankingService` applies filters and sorting
-6. CLI prints the final ranked results
+2. `AgentSearchService` asks OpenAI to parse the request into a `SearchInput`
+3. if OpenAI parsing fails, `AgentSearchService` can fall back to the internal rule parser
+4. `SearchService` calls each connector
+5. connectors return normalized `TicketResult` objects
+6. `RankingService` applies filters and sorting
+7. CLI prints the final ranked results
 
 This separation keeps responsibilities clear:
+- `api`: exposes the backend agent core over HTTP for a future web UI
 - `schemas`: define what data looks like
 - `agent`: converts user intent into structured inputs
 - `agent/clients.py`: selects the mock or real LLM client based on environment configuration
+- `agent/search_agent.py`: coordinates parsing, fallback, search execution, and the structured agent response
 - `agent/validators.py`: checks model output before it reaches business logic
 - `connectors`: define how each platform provides data
 - `services`: contain business logic such as aggregation and ranking
 - `cli`: provides a simple user-facing interface for testing the system
+
+Core backend dependencies:
+- `FastAPI`: HTTP API layer
+- `Pydantic`: API request and response validation
+- `httpx`: HTTP client foundation for tests and future real connectors
+- `uvicorn`: local ASGI server
 
 ## Run the Demo
 
@@ -101,6 +116,39 @@ Fallback-disabled mode:
 python3 -m app.cli.main ask \
   --no-fallback-to-rule \
   "find me a direct ticket from New York to Boston tomorrow under 80 dollars for 2 passengers"
+```
+
+Debug mode:
+
+```bash
+python3 -m app.cli.main ask \
+  --debug \
+  "find me a direct ticket from New York to Boston tomorrow under 80 dollars for 2 passengers"
+```
+
+## Run the API
+
+Install dependencies, then start the FastAPI server:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+uvicorn app.api.main:app --reload
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:8000/health
+```
+
+Search request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/search \
+  -H "Content-Type: application/json" \
+  -d '{"query":"find me a direct ticket from New York to Boston tomorrow under 80 dollars for 2 passengers"}'
 ```
 
 ## OpenAI API Integration
@@ -157,6 +205,7 @@ This stage is meant to help understand the foundations of an agent system:
 
 Near-term steps:
 - generate recommendation summaries for ranked results
+- add automated tests for the agent core and API response mapping
 - add confidence or validation feedback for parsed queries
 - add request tracing and richer retry handling for the OpenAI client
 - replace mock connectors with real platform integrations

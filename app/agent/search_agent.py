@@ -1,0 +1,81 @@
+from dataclasses import dataclass
+
+from app.agent.base import ParsedSearchRequest
+from app.agent.clients import LLMClientError
+from app.agent.llm_parser import LLMSearchParser
+from app.agent.parser import NaturalLanguageSearchParser
+from app.connectors.base import BaseConnector
+from app.schemas.result import TicketResult
+from app.schemas.search import SearchInput
+from app.services.search_service import SearchService
+
+
+@dataclass(slots=True)
+class AgentSearchResponse:
+    query: str
+    search_input: SearchInput
+    results: list[TicketResult]
+    parser_used: str
+    parser_notes: list[str]
+    fallback_reason: str | None = None
+
+
+class AgentSearchService:
+    def __init__(
+        self,
+        *,
+        connectors: list[BaseConnector],
+        llm_parser: LLMSearchParser | None = None,
+        fallback_parser: NaturalLanguageSearchParser | None = None,
+        search_service: SearchService | None = None,
+    ) -> None:
+        self.llm_parser = llm_parser
+        self.fallback_parser = fallback_parser or NaturalLanguageSearchParser()
+        self.search_service = search_service or SearchService(connectors=connectors)
+
+    def search(
+        self,
+        query: str,
+        *,
+        fallback_to_rule: bool = True,
+    ) -> AgentSearchResponse:
+        parser_used = "llm"
+        fallback_reason: str | None = None
+
+        try:
+            llm_parser = self.llm_parser or LLMSearchParser()
+            parsed_request = llm_parser.parse(query)
+        except (LLMClientError, ValueError) as exc:
+            if not fallback_to_rule:
+                raise
+
+            parser_used = "rule"
+            fallback_reason = str(exc)
+            parsed_request = self.fallback_parser.parse(query)
+
+        results = self.search_service.search(parsed_request.search_input)
+        return self._build_response(
+            query=query,
+            parsed_request=parsed_request,
+            results=results,
+            parser_used=parser_used,
+            fallback_reason=fallback_reason,
+        )
+
+    def _build_response(
+        self,
+        *,
+        query: str,
+        parsed_request: ParsedSearchRequest,
+        results: list[TicketResult],
+        parser_used: str,
+        fallback_reason: str | None,
+    ) -> AgentSearchResponse:
+        return AgentSearchResponse(
+            query=query,
+            search_input=parsed_request.search_input,
+            results=results,
+            parser_used=parser_used,
+            parser_notes=parsed_request.notes,
+            fallback_reason=fallback_reason,
+        )
