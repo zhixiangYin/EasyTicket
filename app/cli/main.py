@@ -3,6 +3,7 @@ import argparse
 from app.agent.search_agent import AgentSearchResponse
 from app.config import load_dotenv
 from app.factory import build_agent_search_service
+from app.logging_config import configure_logging
 
 
 def render_response(response: AgentSearchResponse, *, debug: bool = False) -> int:
@@ -99,6 +100,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     load_dotenv()
+    configure_logging()
     parser = build_parser()
     args = parser.parse_args()
     return args.handler(args)

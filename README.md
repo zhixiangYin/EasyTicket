@@ -106,6 +106,9 @@ Core backend dependencies:
 - `pytest`: automated test runner
 - `uvicorn`: local ASGI server
 
+Runtime configuration:
+- `EASYTICKET_LOG_LEVEL`: controls Python logging output; defaults to `WARNING`
+
 ## Run the Demo
 
 ```bash
@@ -206,6 +209,7 @@ Example `.env`:
 EASYTICKET_LLM_CLIENT=openai
 OPENAI_API_KEY="your-api-key"
 EASYTICKET_OPENAI_MODEL="gpt-5.4-mini"
+EASYTICKET_LOG_LEVEL="WARNING"
 ```
 
 The CLI loads `.env` automatically at startup through [app/config.py](/Users/inshishou/Documents/JobApplication/Projects/EasyTicket/app/config.py). Exported shell variables still take priority over `.env` values.

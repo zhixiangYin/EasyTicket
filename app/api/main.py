@@ -2,9 +2,11 @@ from fastapi import FastAPI
 
 from app.api.routes.search import router as search_router
 from app.config import load_dotenv
+from app.logging_config import configure_logging
 
 
 load_dotenv()
+configure_logging()
 
 app = FastAPI(
     title="EasyTicket API",
