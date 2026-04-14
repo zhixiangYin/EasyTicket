@@ -13,6 +13,9 @@ def render_response(response: AgentSearchResponse, *, debug: bool = False) -> in
         print("No tickets found for the current filters.")
         return 0
 
+    print(response.summary)
+    print("")
+
     search_input = response.search_input
     print(
         f"Found {len(response.results)} ticket options from {search_input.origin} to "

@@ -4,6 +4,7 @@ from app.agent.base import ParsedSearchRequest
 from app.agent.clients import LLMClientError
 from app.agent.llm_parser import LLMSearchParser
 from app.agent.parser import NaturalLanguageSearchParser
+from app.agent.summarizer import ResultSummarizer
 from app.connectors.base import BaseConnector
 from app.schemas.result import TicketResult
 from app.schemas.search import SearchInput
@@ -17,6 +18,7 @@ class AgentSearchResponse:
     results: list[TicketResult]
     parser_used: str
     parser_notes: list[str]
+    summary: str
     fallback_reason: str | None = None
 
 
@@ -28,10 +30,12 @@ class AgentSearchService:
         llm_parser: LLMSearchParser | None = None,
         fallback_parser: NaturalLanguageSearchParser | None = None,
         search_service: SearchService | None = None,
+        summarizer: ResultSummarizer | None = None,
     ) -> None:
         self.llm_parser = llm_parser
         self.fallback_parser = fallback_parser or NaturalLanguageSearchParser()
         self.search_service = search_service or SearchService(connectors=connectors)
+        self.summarizer = summarizer or ResultSummarizer()
 
     def search(
         self,
@@ -54,11 +58,16 @@ class AgentSearchService:
             parsed_request = self.fallback_parser.parse(query)
 
         results = self.search_service.search(parsed_request.search_input)
+        summary = self.summarizer.summarize(
+            search_input=parsed_request.search_input,
+            results=results,
+        )
         return self._build_response(
             query=query,
             parsed_request=parsed_request,
             results=results,
             parser_used=parser_used,
+            summary=summary,
             fallback_reason=fallback_reason,
         )
 
@@ -69,6 +78,7 @@ class AgentSearchService:
         parsed_request: ParsedSearchRequest,
         results: list[TicketResult],
         parser_used: str,
+        summary: str,
         fallback_reason: str | None,
     ) -> AgentSearchResponse:
         return AgentSearchResponse(
@@ -77,5 +87,6 @@ class AgentSearchService:
             results=results,
             parser_used=parser_used,
             parser_notes=parsed_request.notes,
+            summary=summary,
             fallback_reason=fallback_reason,
         )

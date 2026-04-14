@@ -39,6 +39,7 @@ class TicketResultResponse(BaseModel):
 class SearchResponse(BaseModel):
     query: str
     parsed_query: ParsedQueryResponse
+    summary: str
     results: list[TicketResultResponse]
     parser_used: str
     fallback_reason: str | None

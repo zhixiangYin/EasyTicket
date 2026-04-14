@@ -39,6 +39,7 @@ def _to_search_response(response: AgentSearchResponse) -> SearchResponse:
             max_price=search_input.max_price,
             direct_only=search_input.direct_only,
         ),
+        summary=response.summary,
         results=[
             TicketResultResponse(
                 platform=result.platform,

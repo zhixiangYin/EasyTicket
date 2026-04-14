@@ -46,6 +46,7 @@ app/
     llm_parser.py
     parser.py
     search_agent.py
+    summarizer.py
     validators.py
   cli/
     main.py
@@ -77,7 +78,8 @@ Current data flow:
 4. `SearchService` calls each connector
 5. connectors return normalized `TicketResult` objects
 6. `RankingService` applies filters and sorting
-7. CLI prints the final ranked results
+7. `ResultSummarizer` generates a short recommendation summary
+8. CLI or API returns the final response
 
 This separation keeps responsibilities clear:
 - `api`: exposes the backend agent core over HTTP for a future web UI
@@ -85,6 +87,7 @@ This separation keeps responsibilities clear:
 - `agent`: converts user intent into structured inputs
 - `agent/clients.py`: selects the mock or real LLM client based on environment configuration
 - `agent/search_agent.py`: coordinates parsing, fallback, search execution, and the structured agent response
+- `agent/summarizer.py`: explains the top ranked result in user-facing language
 - `agent/validators.py`: checks model output before it reaches business logic
 - `connectors`: define how each platform provides data
 - `services`: contain business logic such as aggregation and ranking
